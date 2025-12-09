@@ -1,0 +1,45 @@
+﻿{
+    "build":  {
+                  "files":  [
+                                "main.js",
+                                "preload.js",
+                                "platform-adapter.js",
+                                "public/**/*",
+                                "node_modules/**/*"
+                            ],
+                  "productName":  "Meu Financeiro",
+                  "mac":  {
+                              "icon":  "assets/icon.png",
+                              "category":  "public.app-category.finance",
+                              "target":  [
+                                             "dmg",
+                                             "zip"
+                                         ]
+                          },
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             },
+                                             {
+                                                 "target":  "portable",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "assets/icon.png"
+                          },
+                  "appId":  "com.meufinanceiro.app",
+                  "nsis":  {
+                               "oneClick":  false,
+                               "createDesktopShortcut":  true,
+                               "shortcutName":  "Meu Financeiro",
+                               "createStartMenuShortcut":  true,
+                               "allowToChangeInstallationDirectory":  true
+                           }
+              }
+}

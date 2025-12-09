@@ -1,0 +1,22 @@
+{
+  "appId": "com.meufinanceiro.app",
+  "appName": "Meu Financeiro",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    },
+    "Preferences": {
+      "group": "meu.financeiro"
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "buildOptions": {
+      "releaseType": "APK"
+    }
+  }
+}

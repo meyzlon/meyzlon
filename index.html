@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meu Controle de Finanças</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Capacitor Core para apps mobile -->
+  <script src="https://cdn.jsdelivr.net/npm/@capacitor/core@5/dist/capacitor.js"></script>
+  
+  <!-- Adapter de plataforma -->
+  <script src="platform-adapter.js"></script>
+  
+  <!-- Chart.js para os gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF para exportar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Feather Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>💰 Meu Financeiro</h1>
+    <nav>
+      <button data-screen="dashboard" class="nav-btn nav-btn-active">
+        <span>📊 Início</span>
+      </button>
+      <button data-screen="transactions" class="nav-btn">
+        <span>💳 Transações</span>
+      </button>
+      <button data-screen="reports" class="nav-btn">
+        <span>📈 Relatórios</span>
+      </button>
+      <button data-screen="goals" class="nav-btn">
+        <span>🎯 Metas</span>
+      </button>
+      <button data-screen="settings" class="nav-btn">
+        <span>⚙️ Configurações</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ONBOARDING -->
+    <!-- ONBOARDING -->
+    <section id="onboarding-screen" class="screen">
+      <h2>🎯 Bem-vindo(a)</h2>
+      <p>Vamos começar entendendo o básico da sua vida financeira.</p>
+
+      <div class="card">
+        <h3>Configuração inicial</h3>
+        <label>Renda mensal média (R$)</label>
+        <input type="number" id="onb-income" min="0" step="0.01" placeholder="ex: 3000" />
+
+        <label>Limite de gastos por mês (R$)</label>
+        <input type="number" id="onb-limit" min="0" step="0.01" placeholder="ex: 2500" />
+
+        <p style="margin-top: 16px; margin-bottom: 8px; font-weight: 500;">Categorias padrão (você pode editar depois):</p>
+        <ul class="pill-list" id="onb-categories-list"></ul>
+
+        <button id="onb-save-btn" class="primary">✓ Começar</button>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard-screen" class="screen hidden">
+      <h2>📊 Resumo do mês</h2>
+
+      <div class="controls-row">
+        <label for="dash-month-select">Mês:</label>
+        <select id="dash-month-select"></select>
+        <div id="month-projection-info" style="margin-left: 12px; padding: 8px 12px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; font-size: 0.9em; display: none;">
+          <span id="month-projection-text">🔮 Incluindo parcelas futuras e investimentos</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>📈 Visão geral</h3>
+          <p><strong>Entradas:</strong> <span id="dash-income">R$ 0,00</span></p>
+          <p><strong>Saídas:</strong> <span id="dash-expense">R$ 0,00</span></p>
+          <p><strong>Resultado:</strong> <span id="dash-balance">R$ 0,00</span></p>
+
+          <div class="progress-wrapper">
+            <div class="progress-header">
+              <span>Você já gastou</span>
+              <span id="dash-spent-label">R$ 0,00 de R$ 0,00</span>
+            </div>
+            <div class="progress-bar">
+              <div id="dash-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🥧 Gastos por categoria</h3>
+          <div style="position: relative; height: 250px;">
+            <canvas id="pie-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="floating-actions">
+        <button id="add-expense-btn" class="primary">➖ Registrar gasto</button>
+        <button id="add-income-btn" class="secondary">➕ Registrar renda</button>
+      </div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section id="transactions-screen" class="screen hidden">
+      <h2>💳 Transações</h2>
+
+      <div class="card">
+        <h3>Nova transação</h3>
+
+        <div class="controls-row">
+          <label>
+            <input type="radio" name="tx-type" value="income" checked />
+            ➕ Entrou
+          </label>
+          <label>
+            <input type="radio" name="tx-type" value="expense" />
+            ➖ Saiu
+          </label>
+        </div>
+
+        <!-- Campos específicos para ENTRADA -->
+        <div id="income-fields" class="entry-section" style="display: none;">
+          <div class="entry-header">
+            <div>
+              <p class="entry-title">Tipo de entrada</p>
+              <p class="entry-sub">Escolha se é uma entrada única ou um contrato recorrente.</p>
+            </div>
+          </div>
+
+          <div class="entry-type-grid">
+            <label class="entry-type-card">
+              <input type="radio" name="income-subtype" value="variable" checked />
+              <span class="entry-type-icon">📍</span>
+              <div>
+                <strong>Variável</strong>
+                <small>Entrada única</small>
+              </div>
+            </label>
+
+            <label class="entry-type-card">
+              <input type="radio" name="income-subtype" value="fixed" />
+              <span class="entry-type-icon">📅</span>
+              <div>
+                <strong>Fixa</strong>
+                <small>Recorrente / contrato</small>
+              </div>
+            </label>
+          </div>
+
+          <!-- Campos para entrada FIXA -->
+          <div id="fixed-income-fields" class="contract-card" style="display: none;">
+            <div class="contract-row">
+              <div class="contract-label">
+                <label for="contract-start-month">Mês de início do contrato</label>
+                <p class="entry-sub">Primeiro mês em que você recebe este contrato.</p>
+              </div>
+              <input type="month" id="contract-start-month" />
+            </div>
+
+            <div class="contract-row">
+              <div class="contract-label">
+                <label>Duração do contrato</label>
+                <p class="entry-sub">Defina se termina em um mês ou é sem prazo.</p>
+              </div>
+              <div class="contract-duration-options">
+                <label>
+                  <input type="radio" name="contract-duration" value="indefinite" checked />
+                  Indefinido (sem término)
+                </label>
+                <label>
+                  <input type="radio" name="contract-duration" value="specific" />
+                  Até um mês definido
+                </label>
+              </div>
+            </div>
+
+            <div id="specific-period-fields" class="contract-row" style="display: none;">
+              <div class="contract-label">
+                <label for="contract-end-month">Mês de término</label>
+                <p class="entry-sub">Último mês que você vai receber este contrato.</p>
+              </div>
+              <input type="month" id="contract-end-month" />
+            </div>
+          </div>
+        </div>
+
+<label>Valor (R$)</label>
+        <input type="number" id="tx-amount" min="0" step="0.01" />
+
+        <label>Categoria</label>
+        <select id="tx-category"></select>
+
+        <!-- Campo para associar a uma meta (novo) -->
+        <div id="goal-association-field">
+          <label>
+            <input type="checkbox" id="tx-is-goal-movement" />
+            💾 Associar a uma meta
+          </label>
+          <select id="tx-goal-select" style="display: none; margin-top: 8px;">
+            <option value="">Selecione uma meta</option>
+          </select>
+          <div id="goal-info-display" style="display: none; margin-top: 8px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; font-size: 0.9em;">
+            <p style="margin: 0 0 6px;">Saldo da meta:</p>
+            <p id="goal-current-balance" style="margin: 0; font-weight: bold; color: #3b82f6; font-size: 1.1em;">R$ 0,00</p>
+          </div>
+        </div>
+
+        <!-- Forma de pagamento para SAÍDA / Meio de entrada para ENTRADA -->
+        <div id="payment-method-field">
+          <label id="payment-method-label">Forma de pagamento (opcional)</label>
+          <select id="tx-method">
+            <option value="">Selecione</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+            <option value="pix">Pix</option>
+            <option value="transferencia">Transferência</option>
+            <option value="cheque">Cheque</option>
+            <option value="deposito">Depósito</option>
+          </select>
+        </div>
+
+        <!-- Parcelamento para Cartão de Crédito -->
+        <div id="installment-fields" style="display: none;">
+          <label>Parcelamento (opcional)</label>
+          <div class="controls-row">
+            <label>
+              <input type="radio" name="installment-type" value="cash" checked />
+              À vista
+            </label>
+            <label>
+              <input type="radio" name="installment-type" value="installment" />
+              Parcelado
+            </label>
+          </div>
+
+          <div id="installment-details" style="display: none;">
+            <label>Número de parcelas</label>
+            <input type="number" id="tx-installments" min="2" max="12" value="2" />
+
+            <label>Taxa de juros mensal (%)</label>
+            <input type="number" id="tx-interest-rate" min="0" step="0.01" value="0" />
+
+            <div id="installment-info" style="margin-top: 12px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; display: none;">
+              <p style="margin: 4px 0; font-size: 0.9em;">
+                <strong>Valor da parcela:</strong> <span id="installment-amount">R$ 0,00</span>
+              </p>
+              <p style="margin: 4px 0; font-size: 0.9em;">
+                <strong>Valor total com juros:</strong> <span id="installment-total">R$ 0,00</span>
+              </p>
+              <p style="margin: 4px 0; font-size: 0.9em; color: #ff6b6b;">
+                <strong>Custo dos juros:</strong> <span id="installment-interest">R$ 0,00</span>
+              </p>
+              <p style="margin: 4px 0; font-size: 0.9em; color: #51cf66;">
+                <strong>Economia pagando à vista:</strong> <span id="installment-savings">R$ 0,00</span>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 0.85em; color: #9ca3af; font-style: italic;">
+                <span id="installment-suggestion"></span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <label>Data <span style="color: #3b82f6;">(você pode escolher data passada ou futura)</span></label>
+        <input type="date" id="tx-date" />
+
+        <label>Descrição (opcional)</label>
+        <input type="text" id="tx-note" placeholder="ex: iFood com amigos" />
+
+        <button id="tx-save-btn" class="primary">Salvar</button>
+      </div>
+
+      <div class="card">
+        <h3>📋 Extrato</h3>
+
+        <div class="controls-row">
+          <label for="tx-month-filter">Mês:</label>
+          <select id="tx-month-filter"></select>
+
+          <label for="tx-type-filter">Tipo:</label>
+          <select id="tx-type-filter">
+            <option value="all">Todos</option>
+            <option value="income">Entradas</option>
+            <option value="expense">Saídas</option>
+          </select>
+        </div>
+
+        <ul id="tx-list" class="tx-list"></ul>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reports-screen" class="screen hidden">
+      <h2>📈 Relatórios</h2>
+
+      <div class="floating-actions">
+        <button id="export-pdf-btn" class="secondary">📥 Exportar em PDF</button>
+      </div>
+
+      <!-- Saldo Mensal - Resumo Legível -->
+      <div class="card">
+        <h3>💰 Saldo Mensal</h3>
+        <p style="color: #9ca3af; font-size: 0.85em; margin-bottom: 12px;">
+          <strong>💡 Dica:</strong> Os meses com <strong>🔮</strong> mostram projeção incluindo parcelas futuras e investimentos. Meses com <strong>📅</strong> são históricos reais.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="text-align: center; padding: 16px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
+            <p style="color: #9ca3af; font-size: 0.85em; margin: 0 0 8px;">Entradas</p>
+            <p id="reports-income" style="font-size: 1.5em; font-weight: bold; color: #22c55e; margin: 0;">R$ 0,00</p>
+          </div>
+          <div style="text-align: center; padding: 16px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">
+            <p style="color: #9ca3af; font-size: 0.85em; margin: 0 0 8px;">Saídas</p>
+            <p id="reports-expense" style="font-size: 1.5em; font-weight: bold; color: #ef4444; margin: 0;">R$ 0,00</p>
+          </div>
+          <div style="text-align: center; padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+            <p style="color: #9ca3af; font-size: 0.85em; margin: 0 0 8px;">Saldo</p>
+            <p id="reports-balance" style="font-size: 1.5em; font-weight: bold; color: #3b82f6; margin: 0;">R$ 0,00</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <p style="color: #9ca3af; font-size: 0.85em; margin-bottom: 8px;">Período selecionado:</p>
+          <select id="reports-month-select" style="width: 100%;"></select>
+        </div>
+      </div>
+
+      <!-- Gráficos com Seletor de Tipo -->
+      <div class="grid-2">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0;">Gastos</h3>
+            <select id="expense-chart-type" style="padding: 6px 10px; font-size: 0.9em;">
+              <option value="bar">📊 Coluna</option>
+              <option value="line">📈 Linha</option>
+              <option value="doughnut">🍩 Rosca</option>
+            </select>
+          </div>
+          <div style="position: relative; height: 250px;">
+            <canvas id="expense-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0;">Saldo</h3>
+            <select id="balance-chart-type" style="padding: 6px 10px; font-size: 0.9em;">
+              <option value="line">📈 Linha</option>
+              <option value="bar">📊 Coluna</option>
+              <option value="area">📐 Área</option>
+            </select>
+          </div>
+          <div style="position: relative; height: 250px;">
+            <canvas id="balance-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entradas por Categoria (Novo) -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">Entradas por Categoria</h3>
+          <select id="income-chart-type" style="padding: 6px 10px; font-size: 0.9em;">
+            <option value="bar">📊 Coluna</option>
+            <option value="line">📈 Linha</option>
+            <option value="pie">🥧 Pizza</option>
+          </select>
+        </div>
+        <div style="position: relative; height: 250px;">
+          <canvas id="income-chart"></canvas>
+        </div>
+        <div style="margin-top: 16px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+          <p style="margin: 0; color: #9ca3af; font-size: 0.85em;">Total de Entradas</p>
+          <p id="total-income-display" style="font-size: 1.3em; font-weight: bold; color: #3b82f6; margin: 4px 0 0;">R$ 0,00</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GOALS/METAS -->
+    <section id="goals-screen" class="screen hidden">
+      <h2>🎯 Metas e Agenda</h2>
+
+      <div class="card">
+        <h3>Adicionar nova meta</h3>
+
+        <label>Nome da meta</label>
+        <input type="text" id="goal-name" placeholder="ex: Férias em Cancun" />
+
+        <label>Data alvo (quando precisa ter o dinheiro)</label>
+        <input type="date" id="goal-date" />
+
+        <label>Valor alvo (R$)</label>
+        <input type="number" id="goal-amount" min="0" step="0.01" placeholder="ex: 5000" />
+
+        <label>Valor já acumulado (R$)</label>
+        <input type="number" id="goal-saved" min="0" step="0.01" placeholder="ex: 1000" />
+
+        <label>Frequência de depósitos (opcional)</label>
+        <select id="goal-frequency">
+          <option value="">Sem sugestão</option>
+          <option value="daily">Diário</option>
+          <option value="weekly">Semanal</option>
+          <option value="monthly">Mensal</option>
+        </select>
+
+        <button id="goal-save-btn" class="primary">💾 Salvar meta</button>
+      </div>
+
+      <div class="card">
+        <h3>📅 Minhas metas</h3>
+        <ul id="goals-list" class="goals-list"></ul>
+      </div>
+
+      <!-- Novo: Histórico de Movimentações das Metas -->
+      <div class="card">
+        <h3>📊 Histórico de Movimentações</h3>
+        <p style="color: #9ca3af; font-size: 0.9em; margin-bottom: 12px;">
+          Registro de todos os depósitos e saques das suas metas
+        </p>
+        
+        <div style="margin-bottom: 12px;">
+          <label for="goal-history-filter">Filtrar por meta:</label>
+          <select id="goal-history-filter">
+            <option value="">Todas as metas</option>
+          </select>
+        </div>
+
+        <ul id="goal-history-list" class="goals-list" style="max-height: 400px; overflow-y: auto;">
+          <li style="color: #9ca3af; font-size: 0.9em;">Nenhuma movimentação ainda</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings-screen" class="screen hidden">
+      <h2>⚙️ Configurações</h2>
+
+      <div class="card">
+        <h3>👤 Dados pessoais</h3>
+        <label>Nome completo</label>
+        <input type="text" id="set-name" placeholder="ex: João Silva" />
+
+        <label>Data de nascimento</label>
+        <input type="date" id="set-birthdate" />
+
+        <p style="margin-top: 12px; font-size: 0.9em; color: #9ca3af;">
+          Seus dados ajudam a planejar para aniversários e eventos especiais.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Renda e limite</h3>
+        <label>Renda mensal média (R$)</label>
+        <input type="number" id="set-income" min="0" step="0.01" />
+        <label>Limite de gastos (R$)</label>
+        <input type="number" id="set-limit" min="0" step="0.01" />
+        <button id="set-save-btn" class="primary">Salvar alterações</button>
+      </div>
+
+      <div class="card">
+        <h3>Categorias</h3>
+        <ul id="set-category-list" class="pill-list"></ul>
+
+        <div class="controls-row">
+          <input type="text" id="set-category-new" placeholder="Nova categoria" />
+          <button id="set-category-add-btn" class="secondary">Adicionar</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>Seu controle financeiro, simples e direto.</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

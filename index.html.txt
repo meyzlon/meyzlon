@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meu Controle de Finanças</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js para os gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Feather Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>💰 Meu Financeiro</h1>
+    <nav>
+      <button data-screen="dashboard" class="nav-btn nav-btn-active">
+        <span>📊 Início</span>
+      </button>
+      <button data-screen="transactions" class="nav-btn">
+        <span>💳 Transações</span>
+      </button>
+      <button data-screen="reports" class="nav-btn">
+        <span>📈 Relatórios</span>
+      </button>
+      <button data-screen="settings" class="nav-btn">
+        <span>⚙️ Configurações</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ONBOARDING -->
+    <!-- ONBOARDING -->
+    <section id="onboarding-screen" class="screen">
+      <h2>🎯 Bem-vindo(a)</h2>
+      <p>Vamos começar entendendo o básico da sua vida financeira.</p>
+
+      <div class="card">
+        <h3>Configuração inicial</h3>
+        <label>Renda mensal média (R$)</label>
+        <input type="number" id="onb-income" min="0" step="0.01" placeholder="ex: 3000" />
+
+        <label>Limite de gastos por mês (R$)</label>
+        <input type="number" id="onb-limit" min="0" step="0.01" placeholder="ex: 2500" />
+
+        <p style="margin-top: 16px; margin-bottom: 8px; font-weight: 500;">Categorias padrão (você pode editar depois):</p>
+        <ul class="pill-list" id="onb-categories-list"></ul>
+
+        <button id="onb-save-btn" class="primary">✓ Começar</button>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard-screen" class="screen hidden">
+      <h2>📊 Resumo do mês</h2>
+
+      <div class="controls-row">
+        <label for="dash-month-select">Mês:</label>
+        <select id="dash-month-select"></select>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>📈 Visão geral</h3>
+          <p><strong>Entradas:</strong> <span id="dash-income">R$ 0,00</span></p>
+          <p><strong>Saídas:</strong> <span id="dash-expense">R$ 0,00</span></p>
+          <p><strong>Resultado:</strong> <span id="dash-balance">R$ 0,00</span></p>
+
+          <div class="progress-wrapper">
+            <div class="progress-header">
+              <span>Você já gastou</span>
+              <span id="dash-spent-label">R$ 0,00 de R$ 0,00</span>
+            </div>
+            <div class="progress-bar">
+              <div id="dash-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🥧 Gastos por categoria</h3>
+          <canvas id="pie-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="floating-actions">
+        <button id="add-expense-btn" class="primary">➖ Registrar gasto</button>
+        <button id="add-income-btn" class="secondary">➕ Registrar renda</button>
+      </div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section id="transactions-screen" class="screen hidden">
+      <h2>💳 Transações</h2>
+
+      <div class="card">
+        <h3>Nova transação</h3>
+
+        <div class="controls-row">
+          <label>
+            <input type="radio" name="tx-type" value="income" checked />
+            ➕ Entrou
+          </label>
+          <label>
+            <input type="radio" name="tx-type" value="expense" />
+            ➖ Saiu
+          </label>
+        </div>
+
+        <!-- Campos específicos para ENTRADA -->
+        <div id="income-fields" style="display: none;">
+          <label>Tipo de entrada:</label>
+          <div class="controls-row">
+            <label>
+              <input type="radio" name="income-subtype" value="variable" checked />
+              📊 Variável (entrada única)
+            </label>
+            <label>
+              <input type="radio" name="income-subtype" value="fixed" />
+              🔄 Fixa (recorrente/contrato)
+            </label>
+          </div>
+
+          <!-- Campos para entrada FIXA -->
+          <div id="fixed-income-fields" style="display: none;">
+            <label>Duração do contrato:</label>
+            <div class="controls-row">
+              <label>
+                <input type="radio" name="contract-duration" value="indefinite" checked />
+                Indefinido
+              </label>
+              <label>
+                <input type="radio" name="contract-duration" value="specific" />
+                Período específico
+              </label>
+            </div>
+
+            <div id="specific-period-fields" style="display: none;">
+              <label>Mês de início:</label>
+              <input type="month" id="contract-start-month" />
+
+              <label>Mês de término:</label>
+              <input type="month" id="contract-end-month" />
+            </div>
+          </div>
+        </div>
+
+        <label>Valor (R$)</label>
+        <input type="number" id="tx-amount" min="0" step="0.01" />
+
+        <label>Categoria</label>
+        <select id="tx-category"></select>
+
+        <label>Forma de pagamento (opcional)</label>
+        <select id="tx-method">
+          <option value="">Selecione</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+          <option value="pix">Pix</option>
+          <option value="transferencia">Transferência</option>
+        </select>
+
+        <label>Data</label>
+        <input type="date" id="tx-date" />
+
+        <label>Descrição (opcional)</label>
+        <input type="text" id="tx-note" placeholder="ex: iFood com amigos" />
+
+        <button id="tx-save-btn" class="primary">Salvar</button>
+      </div>
+
+      <div class="card">
+        <h3>📋 Extrato</h3>
+
+        <div class="controls-row">
+          <label for="tx-month-filter">Mês:</label>
+          <select id="tx-month-filter"></select>
+
+          <label for="tx-type-filter">Tipo:</label>
+          <select id="tx-type-filter">
+            <option value="all">Todos</option>
+            <option value="income">Entradas</option>
+            <option value="expense">Saídas</option>
+          </select>
+        </div>
+
+        <ul id="tx-list" class="tx-list"></ul>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reports-screen" class="screen hidden">
+      <h2>📈 Relatórios</h2>
+
+      <div class="card">
+        <h3>Gastos por mês</h3>
+        <canvas id="bar-chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Saldo mensal</h3>
+        <canvas id="line-chart"></canvas>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings-screen" class="screen hidden">
+      <h2>⚙️ Configurações</h2>
+
+      <div class="card">
+        <h3>Renda e limite</h3>
+        <label>Renda mensal média (R$)</label>
+        <input type="number" id="set-income" min="0" step="0.01" />
+        <label>Limite de gastos (R$)</label>
+        <input type="number" id="set-limit" min="0" step="0.01" />
+        <button id="set-save-btn" class="primary">Salvar alterações</button>
+      </div>
+
+      <div class="card">
+        <h3>Categorias</h3>
+        <ul id="set-category-list" class="pill-list"></ul>
+
+        <div class="controls-row">
+          <input type="text" id="set-category-new" placeholder="Nova categoria" />
+          <button id="set-category-add-btn" class="secondary">Adicionar</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>Seu controle financeiro, simples e direto.</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

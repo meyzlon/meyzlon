@@ -1,0 +1,92 @@
+{
+  "name": "meu-financeiro",
+  "version": "1.0.0",
+  "description": "Aplicação de controle financeiro pessoal",
+  "main": "main.js",
+  "homepage": "./",
+  "author": "Seu Nome",
+  "license": "MIT",
+  "scripts": {
+    "start": "http-server -p 3000 -c-1",
+    "dev-server": "http-server -p 3000 -c-1 -o",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-build": "electron-builder",
+    "build-prod": "echo 'Web production ready'",
+    "capacitor-add-android": "cap add android",
+    "capacitor-sync": "cap sync",
+    "capacitor-build": "cap build android",
+    "capacitor-dev": "npm start"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "html2pdf.js": "^0.10.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^5.7.8",
+    "@capacitor/app": "^5.0.0",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^5.7.8",
+    "@capacitor/filesystem": "^5.0.0",
+    "@capacitor/preferences": "^5.0.8",
+    "concurrently": "^8.2.1",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "http-server": "^14.1.1",
+    "wait-on": "^7.0.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "build": {
+    "appId": "com.meu-financeiro.app",
+    "productName": "Meu Financeiro",
+    "files": [
+      "public/**/*",
+      "main.js",
+      "preload.js",
+      "platform-adapter.js",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Meu Financeiro"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png"
+    }
+  }
+}
