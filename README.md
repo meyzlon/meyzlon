@@ -1,8 +1,14 @@
+🚀 Desenvolvedor focado em automações reais e soluções para negócios.
+
 ## 🚀 Selfit Assistant
 
-Sistema de gestão de recepção com dashboards, metas e automação de processos.
+Sistema real desenvolvido para otimizar atendimentos, vendas e gestão de alunos em academias.
 
 ### 📊 Destaques
+## 📈 Impacto
+- Redução de trabalho manual na recepção
+- Organização de métricas e metas
+- Base para automações futuras
 - Controle de atendimentos e vendas
 - Dashboards diários, semanais e mensais
 - Metas e projeções automáticas
